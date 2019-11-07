@@ -3,23 +3,24 @@ require 'oauth2'
 
 OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
+AUTH_PATH = '/auth'
 CALLBACK_PATH = '/auth/callback'
 
 get '/' do
   erb :index
 end
 
-get '/auth' do
+get AUTH_PATH do
   state = params.transform_keys(&:to_sym)
   scope = state.delete(:scope)
-  redirect oauth2(state).auth_code.authorize_url(redirect_uri: redirect_uri, scope: scope, state: state.to_json)
+  redirect oauth2(state).auth_code.authorize_url(redirect_uri: redirect_uri(CALLBACK_PATH), scope: scope, state: state.to_json)
 end
 
 get CALLBACK_PATH do
   state = JSON.parse(params.fetch('state')).transform_keys(&:to_sym)
   code = params.fetch('code')
   begin
-    access_token = oauth2(state).auth_code.get_token(code, redirect_uri: redirect_uri)
+    access_token = oauth2(state).auth_code.get_token(code, redirect_uri: redirect_uri(CALLBACK_PATH))
     erb "<p>Your token: #{access_token.token}</p>"
   rescue OAuth2::Error => e
     erb %(<p>#{e}</p>)
@@ -30,11 +31,16 @@ def oauth2(client_id:, client_secret:, authorize_url:, token_url:)
   OAuth2::Client.new(client_id, client_secret, authorize_url: authorize_url, token_url: token_url)
 end
 
-def redirect_uri
-  uri = URI.parse(request.url)
-  uri.path  = CALLBACK_PATH
-  uri.query = nil
-  uri.to_s
+def redirect_uri(path)
+  approot = ENV['APPROOT']
+  if approot then
+    File.join(approot, path)
+  else
+    uri = URI.parse(request.url)
+    uri.path  = path
+    uri.query = nil
+    uri.to_s
+  end
 end
 
 __END__
@@ -42,7 +48,7 @@ __END__
 @@ index
 
 <div>
-  <form action="/auth">
+  <form action=<%= redirect_uri(AUTH_PATH) %> >
     <label for="client_id">client_id:</label>
     <input id="client_id" name="client_id" type="text" />
 
@@ -62,7 +68,7 @@ __END__
   </form>
 </div>
 
-<p>redirect_uri: <%= redirect_uri %></p>
+<p>redirect_uri: <%= redirect_uri(CALLBACK_PATH) %></p>
 
 @@ layout
 
