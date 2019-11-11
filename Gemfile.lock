@@ -3,7 +3,6 @@ GEM
   specs:
     faraday (0.17.0)
       multipart-post (>= 1.2, < 3)
-    json (2.2.0)
     jwt (2.2.1)
     multi_json (1.14.1)
     multi_xml (0.6.0)
@@ -27,7 +26,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  json
   oauth2
   rack (~> 1.6.11)
   sinatra
