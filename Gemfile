@@ -1,5 +1,5 @@
 source :rubygems
 
-gem 'rack', "~> 1.6.11"
+gem 'rack', "~> 2.2.4"
 gem 'sinatra'
 gem 'oauth2'
